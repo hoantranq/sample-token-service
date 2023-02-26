@@ -20,6 +20,14 @@ public class TokenController : ControllerBase
     {
         var result = _tokenService.GetJweTokenAsync(request);
 
-        return Ok(await Task.FromResult(""));
+        return Ok(await Task.FromResult(result));
+    }
+
+    [HttpPost("jwks")]
+    public async Task<ActionResult> GetJwks()
+    {
+        var result = await _tokenService.GetJwksAsync();
+
+        return Ok(await Task.FromResult(result));
     }
 }

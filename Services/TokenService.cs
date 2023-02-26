@@ -42,20 +42,20 @@ public class TokenService : ITokenService
 
         #region Test JWKS
         var jwk = GetJwks(certificate);
-
-
-        try
-        {
-            var decodedToken = JWT.Decode(jwe, jwk);
-        }
-        catch (Exception ex)
-        {
-
-            throw;
-        }
+        var decodedToken = JWT.Decode(jwe, jwk);
         #endregion
 
         return await Task.FromResult(jwe);
+    }
+
+    public async Task<JwkSet> GetJwksAsync()
+    {
+        var certificate = await GetCertificate2("sample-api"); // TODO: get server (issuer) info from appsettings.json
+        var jwk = GetJwks(certificate);
+        var jwks = new JwkSet();
+        jwks.Add(jwk);
+
+        return await Task.FromResult(jwks);
     }
     #endregion
 
@@ -85,7 +85,7 @@ public class TokenService : ITokenService
 
     private async Task<string> GetCertificatePath()
     {
-        var certPath = Path.Combine(_webHostEnvironment.ContentRootPath + "\\Certificates\\cert.pfx");
+        var certPath = Path.Combine(_webHostEnvironment.ContentRootPath + "/Certificates/cert.pfx");
 
         return await Task.FromResult(certPath);
     }
@@ -93,26 +93,17 @@ public class TokenService : ITokenService
     #endregion
 
     #region Helper methods
-    private async Task ConvertPfxCertToPem(X509Certificate2 certificate)
+    private async Task<string> ConvertPfxCertToPem(X509Certificate2 certificate)
     {
-
-
+        return await Task.FromResult("");
     }
 
     private Jwk GetJwks(X509Certificate2 certificate)
     {
-        try
-        {
-            var key = certificate.GetRSAPrivateKey();
-            Jwk jwk = new Jwk(key, isPrivate: false); //or 'true' by defaut
+        var key = certificate.GetRSAPrivateKey();
+        var jwk = new Jwk(key, isPrivate: false); //or 'true' by defaut
 
-            return jwk;
-        }
-        catch (Exception ex)
-        {
-
-            throw;
-        }
+        return jwk;
     }
     #endregion
 }
