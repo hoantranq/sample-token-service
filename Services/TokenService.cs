@@ -1,5 +1,8 @@
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Jose;
+using Jose.keys;
+using Microsoft.IdentityModel.Tokens;
 using Sample.API.Dtos;
 using Sample.API.Repositories;
 
@@ -37,6 +40,21 @@ public class TokenService : ITokenService
         var jws = JWT.Encode(payload, serverCertificatePrivateKey, JwsAlgorithm.RS512);
         var jwe = JWT.Encode(jws, clientCertificatePublicKey, JweAlgorithm.RSA_OAEP_256, JweEncryption.A256CBC_HS512);
 
+        #region Test JWKS
+        var jwk = GetJwks(certificate);
+
+
+        try
+        {
+            var decodedToken = JWT.Decode(jwe, jwk);
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+        #endregion
+
         return await Task.FromResult(jwe);
     }
     #endregion
@@ -59,10 +77,7 @@ public class TokenService : ITokenService
         {
             var crtFileName = await GetCertificatePath();
 
-            // TODO: Convert .pfx format to .pem format
-            var certPem = "";
-
-            certificate = X509Certificate2.CreateFromPem(certPem);
+            certificate = new X509Certificate2(crtFileName, "", X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
         }
 
         return await Task.FromResult(certificate);
@@ -70,9 +85,9 @@ public class TokenService : ITokenService
 
     private async Task<string> GetCertificatePath()
     {
-        var certPath = Path.Combine(_webHostEnvironment.ContentRootPath + "Certificates\\server.crt");
+        var certPath = Path.Combine(_webHostEnvironment.ContentRootPath + "\\Certificates\\cert.pfx");
 
-        return await Task.FromResult(string.Empty);
+        return await Task.FromResult(certPath);
     }
 
     #endregion
@@ -82,6 +97,22 @@ public class TokenService : ITokenService
     {
 
 
+    }
+
+    private Jwk GetJwks(X509Certificate2 certificate)
+    {
+        try
+        {
+            var key = certificate.GetRSAPrivateKey();
+            Jwk jwk = new Jwk(key, isPrivate: false); //or 'true' by defaut
+
+            return jwk;
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
     }
     #endregion
 }
